@@ -1,11 +1,14 @@
 package rede;
 
-import modelo.Tabuleiro;
 import java.rmi.Remote;
 import java.rmi.RemoteException;
+import modelo.EstadoJogo;
 
-public interface InterfaceJogoRemoto extends Remote{
+public interface InterfaceJogoRemoto extends Remote {
+    boolean fazerJogada(int x, int y, int corJogador) throws RemoteException;
+    void passar(int corJogador) throws RemoteException;
+    void desistir(int corJogador) throws RemoteException;
+    void reiniciar() throws RemoteException;               // <<< novo
 
-    boolean fazerJogada(int x,int y) throws RemoteException;
-    Tabuleiro getTabuleiro() throws RemoteException;
+    EstadoJogo getEstadoJogo() throws RemoteException;
 }

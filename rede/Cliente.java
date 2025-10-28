@@ -10,7 +10,7 @@ public class Cliente {
             InterfaceJogoRemoto jogoRemoto = (InterfaceJogoRemoto) Naming.lookup("rmi://localhost/JogoGo");
 
             SwingUtilities.invokeLater(() -> {
-                JanelaJogo janela = new JanelaJogo(jogoRemoto);
+                JanelaJogo janela = new JanelaJogo(jogoRemoto, false);
                 janela.setVisible(true);
             });
         } catch (Exception e) {

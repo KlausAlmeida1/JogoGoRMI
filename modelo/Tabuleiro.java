@@ -1,144 +1,143 @@
 package modelo;
-import java.util.*;
 import java.io.Serializable;
+import java.util.*;
 
-public class Tabuleiro implements Serializable{
+public class Tabuleiro implements Serializable {
     private static final long serialVersionUID = 1L;
-    private int tam;
-    private int posicoes[][];
-    static public final int BRANCO = 1;
-    static public final int PRETO = 2;
-    static public final int VAZIO = 0;
+    private final int tam;
+    private final int[][] posicoes;
+
+    public static final int VAZIO = 0;
+    public static final int BRANCO = 1;
+    public static final int PRETO  = 2;
 
     public Tabuleiro(int tamanho){
         this.tam = tamanho;
         this.posicoes = new int[tam][tam];
     }
 
-    private List<Ponto> encontrarGrupo(int x, int y){
-        if(x < 0 || x >= tam || y < 0 || y >= tam){
-            System.out.println("Ponto não existe");
-            ArrayList<Ponto> p = new ArrayList<Ponto>();
-            return p;
+    public int getTamanho(){ return tam; }
+    public int get(int x, int y){ return posicoes[x][y]; }
+    public boolean posicaoValida(int x, int y){ return x>=0 && x<tam && y>=0 && y<tam; }
+
+    private List<int[]> vizinhos(int x, int y){
+        int[][] d = {{1,0},{-1,0},{0,1},{0,-1}};
+        List<int[]> ns = new ArrayList<>(4);
+        for (int[] v: d) {
+            int nx = x + v[0], ny = y + v[1];
+            if (posicaoValida(nx,ny)) ns.add(new int[]{nx,ny});
         }
-
-        if(posicoes[x][y] == 0){
-            System.out.println("Casa não pertence a nenhuma cor");
-            ArrayList<Ponto> p = new ArrayList<Ponto>();
-            return p;
-        }
-
-        ArrayList<Ponto> grupo = new ArrayList<Ponto>();
-        LinkedList<Ponto> fila = new LinkedList<>();
-        boolean[][] visitados = new boolean[tam][tam];
-        int corGrupo = posicoes[x][y];
-
-        visitados[x][y] = true;
-        Ponto pontoInicial = new Ponto(x,y);
-        fila.add(pontoInicial);
-
-        while(!fila.isEmpty()){
-            Ponto atual = fila.poll();
-            grupo.add(atual);
-
-            //esquerda
-            if(atual.y - 1 >= 0 && posicoes[atual.x][atual.y - 1] == corGrupo && visitados[atual.x][atual.y-1] == false){
-
-                fila.add(new Ponto(atual.x,atual.y -1));
-                visitados[atual.x][atual.y -1] = true;
-            }
-
-            //cima
-            if(atual.x - 1 >= 0 && posicoes[atual.x - 1][atual.y] == corGrupo && visitados[atual.x - 1][atual.y] == false){
-
-                fila.add(new Ponto(atual.x - 1,atual.y));
-                visitados[atual.x - 1][atual.y] = true;
-            }
-
-            //direita
-            if(atual.y + 1 < tam && posicoes[atual.x][atual.y + 1] == corGrupo && visitados[atual.x][atual.y + 1] == false){
-
-                fila.add(new Ponto(atual.x,atual.y + 1));
-                visitados[atual.x][atual.y + 1] = true;
-            }
-
-            //baixo
-            if(atual.x + 1 < tam && posicoes[atual.x + 1][atual.y] == corGrupo && visitados[atual.x + 1][atual.y] == false){
-
-                fila.add(new Ponto(atual.x + 1,atual.y));
-                visitados[atual.x + 1][atual.y] = true;
-            }
-        }
-        return grupo;
+        return ns;
     }
 
-    private int contarLiberdade(List<Ponto> g){
-        LinkedList<Ponto> grupo = new LinkedList<>(g);
-        HashSet<Ponto> liberdades = new HashSet<Ponto>();
-        int[][] direcoes = {{-1,0},{0,-1},{0,+1},{+1,0}};
+    private GroupInfo grupoELiberdades(int x, int y){
+        int cor = get(x,y);
+        if (cor == VAZIO) return new GroupInfo(Collections.emptySet(), Collections.emptySet(), VAZIO);
+        boolean[][] vis = new boolean[tam][tam];
+        Deque<int[]> q = new ArrayDeque<>();
+        Set<Point> grupo = new HashSet<>();
+        Set<Point> libs  = new HashSet<>();
+        q.add(new int[]{x,y});
+        vis[x][y] = true;
+        while(!q.isEmpty()){
+            int[] p = q.poll();
+            int px = p[0], py = p[1];
+            grupo.add(new Point(px,py));
+            for (int[] n: vizinhos(px,py)){
+                int nx = n[0], ny = n[1];
+                if (get(nx,ny) == VAZIO) libs.add(new Point(nx,ny));
+                else if (!vis[nx][ny] && get(nx,ny) == cor) { vis[nx][ny] = true; q.add(new int[]{nx,ny}); }
+            }
+        }
+        return new GroupInfo(grupo, libs, cor);
+    }
 
-        while (!grupo.isEmpty()) {
-            Ponto atual = grupo.poll();
+    private int removerGrupo(Set<Point> grupo, List<int[]> removed){
+        int count = 0;
+        for (Point p: grupo){
+            if (posicoes[p.x][p.y] != VAZIO){
+                posicoes[p.x][p.y] = VAZIO; count++;
+                if (removed != null) removed.add(new int[]{p.x,p.y});
+            }
+        }
+        return count;
+    }
 
-            //versão mais esperta de verificar os 4 vizinhos com menos código
-            for(int[] dir: direcoes){
-                int x = atual.x + dir[0];
-                int y = atual.y + dir[1];
-
-                if(posicaoValida(x, y) && posicoes[x][y] == 0){
-                    liberdades.add(new Ponto(x, y));
+    private int aplicarJogadaComCaptura(int x, int y, int cor, List<int[]> removed){
+        posicoes[x][y] = cor; // já validado
+        int oponente = (cor == PRETO) ? BRANCO : PRETO;
+        int capturadas = 0;
+        for (int[] n: vizinhos(x,y)){
+            if (get(n[0],n[1]) == oponente){
+                GroupInfo gi = grupoELiberdades(n[0], n[1]);
+                if (gi.liberdades.isEmpty()){
+                    capturadas += removerGrupo(gi.grupo, removed);
                 }
             }
         }
-        
-        return liberdades.size();
+        return capturadas;
     }
 
-    public int processarCapturas(int posX, int posY, int corJogador){
-        int capturas = 0;
-        int corInimigo = corJogador == 1 ? 2 : 1;
-        int[][] direcoes = {{-1,0},{0,-1},{0,+1},{+1,0}};
-        
-        for(int[] dir: direcoes){
-            int x = posX + dir[0];
-            int y = posY + dir[1];
+    public MoveResult tentarJogada(int x, int y, int cor, String ultimoHashKo){
+        if (!posicaoValida(x,y)) return MoveResult.illegal("Fora do tabuleiro");
+        if (get(x,y) != VAZIO)   return MoveResult.illegal("Interseção ocupada");
 
-            if(posicaoValida(x, y) && posicoes[x][y] == corInimigo){
-                List<Ponto> grupo = encontrarGrupo(x, y);
-                int liberdades = contarLiberdade(grupo);
+        String antes = hashTabuleiro();
+        List<int[]> removed = new ArrayList<>();
+        int capturadas;
 
-                if(liberdades == 0){
-                    capturas += grupo.size();
+        posicoes[x][y] = cor;
+        capturadas = aplicarJogadaComCaptura(x,y,cor, removed);
 
-                    for(Ponto peca : grupo){
-                        posicoes[peca.x][peca.y] = 0;
-                    }
-                }
-            }
+        GroupInfo meu = grupoELiberdades(x,y);
+        if (meu.liberdades.isEmpty() && capturadas == 0){
+            setFromHash(antes);
+            return MoveResult.illegal("Suicídio não permitido");
         }
-        return capturas;
+
+        String depois = hashTabuleiro();
+        if (ultimoHashKo != null && ultimoHashKo.equals(depois)){
+            setFromHash(antes);
+            return MoveResult.illegal("Ko: repetir posição anterior é proibido");
+        }
+
+        return MoveResult.ok(capturadas, antes, depois, x, y, removed);
     }
 
-    public int getTamanho(){
-        return this.tam;
+    // ---- hash utilitário ----
+    public String hashTabuleiro(){
+        StringBuilder sb = new StringBuilder(tam*tam);
+        for (int i=0;i<tam;i++) for (int j=0;j<tam;j++) sb.append((char)('0'+posicoes[i][j]));
+        return sb.toString();
     }
+    private int[][] hashToBoard(String h){
+        int[][] m = new int[tam][tam]; int k=0;
+        for (int i=0;i<tam;i++) for (int j=0;j<tam;j++) m[i][j] = h.charAt(k++) - '0';
+        return m;
+    }
+    public void setFromHash(String h){ copiarDe(hashToBoard(h)); }
+    public void copiarDe(int[][] m){ for (int i=0;i<tam;i++) System.arraycopy(m[i], 0, posicoes[i], 0, tam); }
 
-    public int getPeca(int x, int y){
-        if(x >= 0 && x < tam && y >= 0 && y < tam){
-            return posicoes[x][y];
-        }
-        return -1;
+    private static class Point { final int x,y; Point(int x,int y){ this.x=x; this.y=y; }
+        @Override public boolean equals(Object o){ if(!(o instanceof Point)) return false; Point p=(Point)o; return p.x==x&&p.y==y; }
+        @Override public int hashCode(){ return (x*397)^y; }
     }
+    private static class GroupInfo { final Set<Point> grupo, liberdades; final int cor;
+        GroupInfo(Set<Point> g, Set<Point> l, int c){ grupo=g; liberdades=l; cor=c; } }
 
-    public boolean posicaoValida(int x, int y){
-        if(x >= 0 && x < tam && y >= 0 && y < tam){
-            return true;
+    public static class MoveResult implements Serializable {
+        public final boolean legal;
+        public final int capturadas;
+        public final String antesHash, depoisHash;
+        public final int lastX, lastY;
+        public final String reason;
+        public final List<int[]> removed; // posições capturadas
+
+        private MoveResult(boolean legal, int c, String a, String d, int lx, int ly, String r, List<int[]> rem){
+            this.legal=legal; this.capturadas=c; this.antesHash=a; this.depoisHash=d;
+            this.lastX=lx; this.lastY=ly; this.reason=r; this.removed = rem;
         }
-        return false;
-    }
-    public void colocarPeca(int x, int y, int cor){
-        if(posicaoValida(x, y) && (cor == 1 || cor == 2)){
-            posicoes[x][y] = cor;
-        }
+        public static MoveResult illegal(String reason){ return new MoveResult(false,0,null,null,-1,-1,reason, List.of()); }
+        public static MoveResult ok(int c,String a,String d,int lx,int ly, List<int[]> rem){ return new MoveResult(true,c,a,d,lx,ly,null, rem); }
     }
 }

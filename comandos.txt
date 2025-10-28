@@ -3,3 +3,5 @@ javac -d bin modelo/*.java rede/*.java visao/*.java
 java -cp bin rede.Servidor
 
 java -cp bin rede.Cliente
+
+ (36/44/52/60...)

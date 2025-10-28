@@ -22,7 +22,7 @@ public class Servidor {
             InterfaceJogoRemoto jogoRemoto = (InterfaceJogoRemoto) Naming.lookup("rmi://localhost/JogoGo");
 
              SwingUtilities.invokeLater(() -> {
-                JanelaJogo janela = new JanelaJogo(jogoRemoto);
+                JanelaJogo janela = new JanelaJogo(jogoRemoto, true);
                 janela.setTitle("Jogo do servidor");
                 janela.setVisible(true);
             });

@@ -66,11 +66,28 @@ O fluxo de comunicação segue o modelo RMI: o `Servidor` registra um serviço (
 ```mermaid
 graph TD
     subgraph "Computador 1 (Servidor)"
-        S[Servidor.java] -- inicia --> V1[JanelaJogo (Preto)] & S -- "inicia e registra" --> JRI[JogoRemotoImpl (Serviço RMI)] & RMI[RMI Registry (Porta 1099)] & JRI -- contém --> M[Lógica do Jogo (Jogo.java)] & S -- "registra em" --> RMI & V1 -- "RMI Call" --> JRI
+        direction TB
+        S[Servidor.java]
+        V1[JanelaJogo (Preto)]
+        JRI[JogoRemotoImpl (Serviço RMI)]
+        RMI[RMI Registry (Porta 1099)]
+        M[Lógica do Jogo (Jogo.java)]
+        
+        S -- inicia --> V1
+        S -- "inicia e registra" --> JRI
+        S -- "registra em" --> RMI
+        JRI -- contém --> M
+        V1 -- "RMI Call" --> JRI
     end
     
     subgraph "Computador 2 (Cliente)"
-        C[Cliente.java] -- inicia --> V2[JanelaJogo (Branco)] & C -- "RMI Lookup" --> RMI & V2 -- "RMI Call" --> JRI
+        direction TB
+        C[Cliente.java]
+        V2[JanelaJogo (Branco)]
+        
+        C -- inicia --> V2
+        C -- "RMI Lookup" --> RMI
+        V2 -- "RMI Call" --> JRI
     end
 
     style V1 fill:#f9f,stroke:#333,stroke-width:2px

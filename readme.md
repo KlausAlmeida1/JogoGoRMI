@@ -73,10 +73,10 @@ Abra um terminal na pasta raiz do projeto (onde está a pasta `src`) e execute o
 
 ```bash
 # No Windows (CMD ou PowerShell)
-javac -d bin src/modelo/*.java src/rede/*.java src/visao/*.java
+javac -d bin modelo/*.java rede/*.java visao/*.java
 
 # No Linux ou macOS
-javac -d bin src/modelo/*.java src/rede/*.java src/visao/*.java
+javac -d bin modelo/*.java rede/*.java visao/*.java
 ```
 
 ### 2\. Execução

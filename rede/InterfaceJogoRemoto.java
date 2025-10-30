@@ -8,7 +8,7 @@ public interface InterfaceJogoRemoto extends Remote {
     boolean fazerJogada(int x, int y, int corJogador) throws RemoteException;
     void passar(int corJogador) throws RemoteException;
     void desistir(int corJogador) throws RemoteException;
-    void reiniciar() throws RemoteException;               // <<< novo
+    void reiniciar() throws RemoteException;
 
     EstadoJogo getEstadoJogo() throws RemoteException;
 }

@@ -10,7 +10,7 @@ public class JogoRemotoImpl extends UnicastRemoteObject implements InterfaceJogo
 
     public JogoRemotoImpl() throws RemoteException {
         super();
-        // Tempo inicial por lado: 5 min (alterar se quiser)
+        // o 5 significa os minutos
         this.jogo = new Jogo(9, 5 * 60_000L);
     }
 
@@ -22,7 +22,6 @@ public class JogoRemotoImpl extends UnicastRemoteObject implements InterfaceJogo
     @Override public void reiniciar() throws RemoteException { jogo.reiniciar(); }
 
     @Override public EstadoJogo getEstadoJogo() throws RemoteException {
-        // garante desconte de tempo em tempo real
         return jogo.snapshotEstado();
     }
 }

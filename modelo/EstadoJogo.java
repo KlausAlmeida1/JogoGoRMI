@@ -15,7 +15,6 @@ public class EstadoJogo implements Serializable {
     private final List<int[]> ultimasCapturas;
     private final boolean gameOver;
 
-    // >>> Tempos (ms) <<<
     private final long tempoPretasMs;
     private final long tempoBrancasMs;
 
